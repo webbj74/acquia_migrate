@@ -1,0 +1,10 @@
+name = Acquia migrate
+description = "Allows Drupal to securely migrate the site the Acquia Cloud."
+package = Acquia Network Connector
+core = 7.x
+configure = admin/config/system/acquia-migrate
+files[] = acquia_migrate.module
+files[] = acquia_migrate.install
+files[] = acquia_migrate.pages.inc
+php = 5.2
+dependencies[] = composer_manager

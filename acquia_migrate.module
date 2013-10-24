@@ -1,0 +1,22 @@
+<?php
+
+/**
+ * @file
+ *   Acquia Migrate securely sends site to Acquia Cloud.
+ */
+
+
+/**
+ * Implements hook_menu.
+ */
+function acquia_migrate_menu() {
+  $items = array();
+  $items['admin/config/system/acquia-migrate'] = array(
+    'title' => 'Acquia Migrate settings',
+    'description' => 'Migrate your site to Acquia Cloud.',
+    'page callback' => 'acquia_migrate_settings_page',
+    'file' => 'acquia_migrate.pages.inc',
+    'access arguments' => array('administer site configuration'),
+  );
+  return $items;
+}
