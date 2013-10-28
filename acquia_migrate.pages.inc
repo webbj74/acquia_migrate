@@ -56,6 +56,12 @@ function acquia_migrate_settings_form($form, &$form_state) {
   return $form;
 }
 
+function acquia_migrate_settings_form_validate($element, $form, &$form_state) {
+  if (!function_exists('curl_init')) {
+    form_error($element, t('CURL is not installed.'));
+  }
+}
+
 function acquia_migrate_settings_form_submit($form, &$form_state) {
 
   variable_set('acquia_migrate_cloudapi_username', $form_state['values']['acquia_migrate_cloudapi_username']);
@@ -100,6 +106,15 @@ function acquia_migrate_migrate_form($form, &$form_state, $migrate_user, $migrat
                 be overwritten by migration. Environments running a tag are not included.'
       )
     );
+    $form['actions'] = array('#type' => 'actions');
+    $form['actions']['code'] = array(
+      '#type' => 'submit',
+      '#value' => t('Migrate code'),
+    );
+    $form['actions']['files'] = array(
+      '#type' => 'submit',
+      '#value' => t('Migrate files'),
+    );
   }
   else {
     $form['environment'] = array(
@@ -108,4 +123,19 @@ function acquia_migrate_migrate_form($form, &$form_state, $migrate_user, $migrat
   }
 
   return $form;
+}
+
+function acquia_migrate_migrate_form_submit($form, &$form_state) {
+  $op = $form_state['values']['op'];
+  $environment = $form_state['values']['environment'];
+  $docroot = preg_quote(DRUPAL_ROOT . '/');
+  switch ($op) {
+    case t('Migrate code'):
+      drupal_set_message(t('Migrating code for envrionment %env from %docroot', array('%env' => $environment, '%docroot' => $docroot)));
+      break;
+    case t('Migrate files'):
+      drupal_set_message(t('Migrating files for envrionment %env', array('%env' => $environment)));
+      break;
+  }
+  return;
 }
