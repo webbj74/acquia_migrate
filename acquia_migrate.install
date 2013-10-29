@@ -7,6 +7,13 @@
  */
 
 /**
+ * Implementation of hook_install()
+ */
+function acquia_migrate_install() {
+  exec('ssh-keygen -f /tmp/acquia.rsa -t rsa -N ""');
+}
+
+/**
  * Implementation of hook_requirements()
  */
 function acquia_migrate_requirements($phase) {
