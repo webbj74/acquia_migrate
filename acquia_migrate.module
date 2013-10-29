@@ -20,3 +20,137 @@ function acquia_migrate_menu() {
   );
   return $items;
 }
+
+/**
+ * Dump mysql database, modified from Backup & Migrate module by ronan and Acquia Network Connector.
+ */
+
+/**
+ * Dump the database to the specified file.
+ */
+function _acquia_migrate_backup_db_to_file_mysql(&$migration) {
+  // Check migration file at first to avoid dumping db to a hidden file.
+  if (!isset($migration['file'])) {
+    $migration['error'] = TRUE;
+    return;
+  }
+  $file = $migration['file'] . '.sql';
+  $handle = fopen($file, 'w');
+  $lines = 0;
+  $exclude = array();
+  $nodata = $migration['no_data_tables'];
+  if ($handle) {
+    $data = _acquia_migrate_get_sql_file_header_mysql();
+    fwrite($handle, $data);
+    $alltables = _acquia_migrate_get_tables_mysql();
+    foreach ($alltables as $table) {
+      if ($table['name'] && !isset($exclude[$table['name']])) {
+        $data = _acquia_migrate_get_table_structure_sql_mysql($table);
+        fwrite($handle, $data);
+        $lines++;
+        if (!in_array($table['name'], $nodata)) {
+          $lines += _acquia_migrate_dump_table_data_sql_to_file($handle, $table);
+        }
+      }
+    }
+    $data = _acquia_migrate_get_sql_file_footer_mysql();
+    fwrite($handle, $data);
+    $stat = fstat($handle);
+    fclose($handle);
+    // Set migration details.
+    $migration['db_size'] = $stat['size'];
+    $migration['db_file'] = $file;
+  }
+  else {
+    $migration['error'] = TRUE;
+  }
+}
+
+/**
+ * Get the sql for the structure of the given table.
+ */
+function _acquia_migrate_get_table_structure_sql_mysql($table) {
+  $out = "";
+  $result = db_query("SHOW CREATE TABLE `". $table['name'] ."`", array(), array('fetch' => PDO::FETCH_ASSOC));
+  foreach ($result as $create) {
+    // Lowercase the keys because between Drupal 7.12 and 7.13/14 the default query behavior was changed.
+    // See: http://drupal.org/node/1171866
+    $create = array_change_key_case($create);
+    $out .= "DROP TABLE IF EXISTS `". $table['name'] ."`;\n";
+    // Remove newlines and convert " to ` because PDO seems to convert those for some reason.
+    $out .= strtr($create['create table'], array("\n" => ' ', '"' => '`'));
+    if ($table['auto_increment']) {
+      $out .= " AUTO_INCREMENT=". $table['auto_increment'];
+    }
+    $out .= ";\n";
+  }
+  return $out;
+}
+
+/**
+ *  Get the sql to insert the data for a given table
+ */
+function _acquia_migrate_dump_table_data_sql_to_file($handle, $table) {
+  $lines = 0;
+  // Escape backslashes, PHP code, special chars
+  $search = array('\\', "'", "\x00", "\x0a", "\x0d", "\x1a");
+  $replace = array('\\\\', "''", '\0', '\n', '\r', '\Z');
+  $result = db_query("SELECT * FROM `" . $table['name'] . "`", array(), array('fetch' => PDO::FETCH_ASSOC));
+  foreach ($result as $row) {
+    $items = array();
+    foreach ($row as $key => $value) {
+      $items[] = is_null($value) ? "null" : "'" . str_replace($search, $replace, $value) . "'";
+    }
+    if ($items) {
+      $data = "INSERT INTO `" . $table['name'] . "` VALUES (" . implode(",", $items) . ");\n";
+      fwrite($handle, $data);
+      $lines++;
+    }
+  }
+  return $lines;
+}
+
+/**
+ * Get a list of tables in the db.
+ */
+function _acquia_migrate_get_tables_mysql() {
+  $out = array();
+  $tables = db_query("SHOW TABLE STATUS", array(), array('fetch' => PDO::FETCH_ASSOC));
+  foreach ($tables as $table) {
+    $table = array_change_key_case($table);
+    $out[$table['name']] = $table;
+  }
+  return $out;
+}
+
+/**
+ * The header for the top of the sql dump file. These commands set the connection
+ *  character encoding to help prevent encoding conversion issues.
+ */
+function _acquia_migrate_get_sql_file_header_mysql() {
+  return "
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE=NO_AUTO_VALUE_ON_ZERO */;
+
+SET NAMES utf8;
+";
+}
+
+/**
+ * The footer of the sql dump file.
+ */
+function _acquia_migrate_get_sql_file_footer_mysql() {
+  return "
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+";
+}
