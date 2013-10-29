@@ -56,12 +56,6 @@ function acquia_migrate_settings_form($form, &$form_state) {
   return $form;
 }
 
-function acquia_migrate_settings_form_validate($element, $form, &$form_state) {
-  if (!function_exists('curl_init')) {
-    form_error($element, t('CURL is not installed.'));
-  }
-}
-
 function acquia_migrate_settings_form_submit($form, &$form_state) {
 
   variable_set('acquia_migrate_cloudapi_username', $form_state['values']['acquia_migrate_cloudapi_username']);

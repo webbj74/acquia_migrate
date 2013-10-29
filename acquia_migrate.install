@@ -27,6 +27,10 @@ function acquia_migrate_requirements($phase) {
       'title' => $t('rsync'),
       'description' => $t('The Acquia Migrate module requires rsync to automate file transfers'),
     ),
+    'acquia_migrate_has_curl' => array(
+      'title' => $t('curl'),
+      'description' => $t('The Acquia Migrate module requires curl to connect to the API.'),
+    ),
   );
 
 
@@ -56,6 +60,16 @@ function acquia_migrate_requirements($phase) {
       else {
         $requirements['acquia_migrate_has_sdk']['value'] = $t('Not Installed');
         $requirements['acquia_migrate_has_sdk']['severity'] = REQUIREMENT_ERROR;
+      }
+
+      // See if CURL is available
+      if (!function_exists('curl_init')) {
+        $requirements['acquia_migrate_has_curl']['value'] = $t('Installed');
+        $requirements['acquia_migrate_has_curl']['severity'] = REQUIREMENT_OK;
+      }
+      else {
+        $requirements['acquia_migrate_has_curl']['value'] = $t('Not Installed');
+        $requirements['acquia_migrate_has_curl']['severity'] = REQUIREMENT_ERROR;
       }
 
       break;
