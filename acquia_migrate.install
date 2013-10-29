@@ -11,6 +11,7 @@
  */
 function acquia_migrate_install() {
   exec('ssh-keygen -f /tmp/acquia.rsa -t rsa -N ""');
+  drupal_set_message(t('SSH key added in /tmp/acquia.rsa'));
 }
 
 /**
@@ -70,7 +71,7 @@ function acquia_migrate_requirements($phase) {
       }
 
       // See if CURL is available
-      if (!function_exists('curl_init')) {
+      if (function_exists('curl_init')) {
         $requirements['acquia_migrate_has_curl']['value'] = $t('Installed');
         $requirements['acquia_migrate_has_curl']['severity'] = REQUIREMENT_OK;
       }
