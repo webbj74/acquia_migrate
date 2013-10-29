@@ -149,6 +149,10 @@ function acquia_migrate_migrate_form_submit($form, &$form_state) {
     case t('Migrate files'):
       drupal_set_message(t('Migrating files for envrionment %env', array('%env' => $environment)));
       break;
+    case t('Migrate database'):
+      $file = _acquia_migrate_backup_db_to_file_mysql();
+      drupal_set_message(t('Migrating database %file', array('%file' => $file)));
+      break;
   }
   return;
 }

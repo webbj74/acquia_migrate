@@ -28,17 +28,13 @@ function acquia_migrate_menu() {
 /**
  * Dump the database to the specified file.
  */
-function _acquia_migrate_backup_db_to_file_mysql(&$migration) {
-  // Check migration file at first to avoid dumping db to a hidden file.
-  if (!isset($migration['file'])) {
-    $migration['error'] = TRUE;
-    return;
-  }
-  $file = $migration['file'] . '.sql';
+function _acquia_migrate_backup_db_to_file_mysql() {
+  global $databases;
+  $dbname = $databases['default']['default']['database'];
+  $file = "/tmp/$dbname.sql";
   $handle = fopen($file, 'w');
   $lines = 0;
   $exclude = array();
-  $nodata = $migration['no_data_tables'];
   if ($handle) {
     $data = _acquia_migrate_get_sql_file_header_mysql();
     fwrite($handle, $data);
@@ -48,9 +44,7 @@ function _acquia_migrate_backup_db_to_file_mysql(&$migration) {
         $data = _acquia_migrate_get_table_structure_sql_mysql($table);
         fwrite($handle, $data);
         $lines++;
-        if (!in_array($table['name'], $nodata)) {
-          $lines += _acquia_migrate_dump_table_data_sql_to_file($handle, $table);
-        }
+        $lines += _acquia_migrate_dump_table_data_sql_to_file($handle, $table);
       }
     }
     $data = _acquia_migrate_get_sql_file_footer_mysql();
@@ -58,11 +52,7 @@ function _acquia_migrate_backup_db_to_file_mysql(&$migration) {
     $stat = fstat($handle);
     fclose($handle);
     // Set migration details.
-    $migration['db_size'] = $stat['size'];
-    $migration['db_file'] = $file;
-  }
-  else {
-    $migration['error'] = TRUE;
+    return $file;
   }
 }
 
