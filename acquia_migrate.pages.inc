@@ -89,13 +89,13 @@ function acquia_migrate_migrate_form($form, &$form_state, $migrate_user, $migrat
 
   $sites = array();
   foreach($cloudapi->sites() as $site) {
-    $sites[] = "$site";
+    $sites["$site"] = "$site";
   }
 
-  //$sdk = libraries_load('acquia-sdk-php');
-  $form['#prefix'] = t('Select the server to connect to. %xx', array('%xx' => print_r($sites,1)));
+  $form['#prefix'] = t('Select the server to connect to.');
 
   if (count($envs) > 1) {
+    $selected = isset($form_state['values']['environment']) ? $form_state['values']['environment'] : key($sites);
     $form['environment'] = array(
       '#type' => 'select',
       '#title' => t('Select environment for migration'),
@@ -104,8 +104,23 @@ function acquia_migrate_migrate_form($form, &$form_state, $migrate_user, $migrat
         'Select which environment your site should be migrated to.
                 Only environments that are running trunk or branch can
                 be overwritten by migration. Environments running a tag are not included.'
-      )
+      ),
+      '#ajax' => array(
+        'callback' => 'acquia_migrate_databases_callback',
+        'wrapper' => 'databases',
+        'effect' => 'slide',
+        ),
     );
+
+    $form['databases'] = array(
+      '#type' => 'select',
+      '#title' => t("Select database for migration"),
+      '#prefix' => '<div id="databases">',
+      '#suffix' => '</div>',
+      '#options' => _acquia_migrate_databases($selected),
+      '#default_value' => isset($form_state['values']['databases']) ? $form_state['values']['databases'] : '',
+    );
+
     $form['actions'] = array('#type' => 'actions');
     $form['actions']['code'] = array(
       '#type' => 'submit',
@@ -114,6 +129,10 @@ function acquia_migrate_migrate_form($form, &$form_state, $migrate_user, $migrat
     $form['actions']['files'] = array(
       '#type' => 'submit',
       '#value' => t('Migrate files'),
+    );
+    $form['actions']['database'] = array(
+      '#type' => 'submit',
+      '#value' => t('Migrate database'),
     );
   }
   else {
@@ -138,4 +157,25 @@ function acquia_migrate_migrate_form_submit($form, &$form_state) {
       break;
   }
   return;
+}
+
+function acquia_migrate_databases_callback($form, $form_state) {
+  return $form['databases'];
+}
+
+function _acquia_migrate_databases($environment) {
+  composer_manager_register_autoloader();
+  $migrate_user = variable_get('acquia_migrate_cloudapi_username', '');
+  $migrate_password = variable_get('acquia_migrate_cloudapi_password', '');
+
+  $cloudapi = CloudApiClient::factory(array(
+      'username' => $migrate_user,
+      'password' => $migrate_password,
+    ));
+  $sitedatabases = $cloudapi->siteDatabases($environment);
+  $dbs = array();
+  foreach($sitedatabases as $key => $value) {
+    $dbs[$key] = $key; 
+  }
+  return $dbs;
 }
