@@ -10,8 +10,9 @@
  * Implementation of hook_install()
  */
 function acquia_migrate_install() {
-  exec('ssh-keygen -f /tmp/acquia.rsa -t rsa -N ""');
-  drupal_set_message(t('SSH key added in /tmp/acquia.rsa'));
+  exec('mkdir /tmp/acquia_migrate');
+  exec('ssh-keygen -f /tmp/acquia_migrate/acquia.rsa -t rsa -N ""');
+  drupal_set_message(t('SSH key added in /tmp/acquia_migrate/acquia.rsa'));
 }
 
 /**

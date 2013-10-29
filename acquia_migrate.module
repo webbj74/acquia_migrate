@@ -31,7 +31,7 @@ function acquia_migrate_menu() {
 function _acquia_migrate_backup_db_to_file_mysql() {
   global $databases;
   $dbname = $databases['default']['default']['database'];
-  $file = "/tmp/$dbname.sql";
+  $file = "/tmp/acquia_migrate/$dbname.sql";
   $handle = fopen($file, 'w');
   $lines = 0;
   $exclude = array();
