@@ -57,9 +57,11 @@ function acquia_migrate_settings_form($form, &$form_state) {
 }
 
 function acquia_migrate_settings_form_submit($form, &$form_state) {
-
-  variable_set('acquia_migrate_cloudapi_username', $form_state['values']['acquia_migrate_cloudapi_username']);
-  variable_set('acquia_migrate_cloudapi_password', $form_state['values']['acquia_migrate_cloudapi_password']);
+  $migrate_user = $form_state['values']['acquia_migrate_cloudapi_username'];
+  $migrate_password = $form_state['values']['acquia_migrate_cloudapi_password'];
+  
+  variable_set('acquia_migrate_cloudapi_username', $migrate_user);
+  variable_set('acquia_migrate_cloudapi_password', $migrate_password);
 
   // Redirect to the path without the suffix.
   $form_state['redirect'] = array('admin/config/system/acquia-migrate');
@@ -142,6 +144,20 @@ function acquia_migrate_migrate_form_submit($form, &$form_state) {
   $op = $form_state['values']['op'];
   $environment = $form_state['values']['environment'];
   $docroot = preg_quote(DRUPAL_ROOT . '/');
+  
+  composer_manager_register_autoloader();
+  $migrate_user = variable_get('acquia_migrate_cloudapi_username', '');
+  $migrate_password = variable_get('acquia_migrate_cloudapi_password', '');
+
+  $cloudapi = CloudApiClient::factory(array(
+      'username' => $migrate_user,
+      'password' => $migrate_password,
+    ));
+  
+  $publicKey = file_get_contents('/tmp/acquia_migrate/acquia.rsa.pub');
+  // TODO: Check if SSH key exists first.
+  $cloudapi->addSshKey($environment, $publicKey, 'acquiamigration');
+  
   switch ($op) {
     case t('Migrate code'):
       drupal_set_message(t('Migrating code for envrionment %env from %docroot', array('%env' => $environment, '%docroot' => $docroot)));
