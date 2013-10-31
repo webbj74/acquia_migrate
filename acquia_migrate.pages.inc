@@ -108,13 +108,13 @@ function acquia_migrate_migrate_form($form, &$form_state, $migrate_user, $migrat
         ),
     );
 
-    $form['databases'] = array(
+    $form['database'] = array(
       '#type' => 'select',
       '#title' => t("Select database for migration"),
       '#prefix' => '<div id="databases">',
       '#suffix' => '</div>',
-      '#options' => _acquia_migrate_databases($selected),
-      '#default_value' => isset($form_state['values']['databases']) ? $form_state['values']['databases'] : '',
+      '#options' => acquia_migrate_databases($selected),
+      '#default_value' => isset($form_state['values']['database']) ? $form_state['values']['database'] : '',
     );
 
     $form['actions'] = array('#type' => 'actions');
@@ -143,21 +143,15 @@ function acquia_migrate_migrate_form($form, &$form_state, $migrate_user, $migrat
 function acquia_migrate_migrate_form_submit($form, &$form_state) {
   $op = $form_state['values']['op'];
   $environment = $form_state['values']['environment'];
+  $database = $form_state['values']['database'];
   $docroot = preg_quote(DRUPAL_ROOT . '/');
   
-  composer_manager_register_autoloader();
-  $migrate_user = variable_get('acquia_migrate_cloudapi_username', '');
-  $migrate_password = variable_get('acquia_migrate_cloudapi_password', '');
+  if (!acquia_migrate_sshkey_exists($environment)) {
+    $cloudapi = acquia_migrate_cloudapi_connect();
+    $publicKey = file_get_contents('/tmp/acquia_migrate/acquia.rsa.pub');
+    $cloudapi->addSshKey($environment, $publicKey, 'acquiamigration');
+  }
 
-  $cloudapi = CloudApiClient::factory(array(
-      'username' => $migrate_user,
-      'password' => $migrate_password,
-    ));
-  
-  $publicKey = file_get_contents('/tmp/acquia_migrate/acquia.rsa.pub');
-  // TODO: Check if SSH key exists first.
-  $cloudapi->addSshKey($environment, $publicKey, 'acquiamigration');
-  
   switch ($op) {
     case t('Migrate code'):
       drupal_set_message(t('Migrating code for envrionment %env from %docroot', array('%env' => $environment, '%docroot' => $docroot)));
@@ -174,22 +168,6 @@ function acquia_migrate_migrate_form_submit($form, &$form_state) {
 }
 
 function acquia_migrate_databases_callback($form, $form_state) {
-  return $form['databases'];
+  return $form['database'];
 }
 
-function _acquia_migrate_databases($environment) {
-  composer_manager_register_autoloader();
-  $migrate_user = variable_get('acquia_migrate_cloudapi_username', '');
-  $migrate_password = variable_get('acquia_migrate_cloudapi_password', '');
-
-  $cloudapi = CloudApiClient::factory(array(
-      'username' => $migrate_user,
-      'password' => $migrate_password,
-    ));
-  $sitedatabases = $cloudapi->siteDatabases($environment);
-  $dbs = array();
-  foreach($sitedatabases as $key => $value) {
-    $dbs[$key] = $key; 
-  }
-  return $dbs;
-}
