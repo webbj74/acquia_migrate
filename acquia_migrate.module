@@ -4,6 +4,7 @@
  * @file
  *   Acquia Migrate securely sends site to Acquia Cloud.
  */
+use Acquia\Cloud\Api\CloudApiClient;
 
 
 /**
@@ -143,4 +144,36 @@ function _acquia_migrate_get_sql_file_footer_mysql() {
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 ";
+}
+
+function acquia_migrate_cloudapi_connect() {
+  $migrate_user = variable_get('acquia_migrate_cloudapi_username', '');
+  $migrate_password = variable_get('acquia_migrate_cloudapi_password', '');
+  composer_manager_register_autoloader();
+
+  $cloudapi = CloudApiClient::factory(array(
+      'username' => $migrate_user,
+      'password' => $migrate_password,
+    ));
+  return $cloudapi;
+}
+
+function acquia_migrate_databases($environment) {
+  $cloudapi = acquia_migrate_cloudapi_connect();
+  $sitedatabases = $cloudapi->siteDatabases($environment);
+  $dbs = array();
+  foreach($sitedatabases as $key => $value) {
+    $dbs[$key] = $key; 
+  }
+  return $dbs;
+}
+
+function acquia_migrate_sshkey_exists($site) {
+  $cloudapi = acquia_migrate_cloudapi_connect();
+  $sshkeys = $cloudapi->sshKeys($site);
+  foreach($sshkeys as $sshkey) {
+    if ($sshkey['nickname'] === 'acquiamigration') {
+      return true;
+    }
+  }
 }
