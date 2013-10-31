@@ -91,15 +91,15 @@ function acquia_migrate_migrate_form($form, &$form_state, $migrate_user, $migrat
   $form['#prefix'] = t('Select the server to connect to.');
 
   if (count($envs) > 1) {
-    $selected = isset($form_state['values']['environment']) ? $form_state['values']['environment'] : key($sites);
-    $form['environment'] = array(
+    $selected = isset($form_state['values']['site']) ? $form_state['values']['site'] : key($sites);
+    $form['site'] = array(
       '#type' => 'select',
-      '#title' => t('Select environment for migration'),
+      '#title' => t('Select site for migration'),
       '#options' => $sites,
       '#description' => t(
-        'Select which environment your site should be migrated to.
-                Only environments that are running trunk or branch can
-                be overwritten by migration. Environments running a tag are not included.'
+        'Select which site your site should be migrated to.
+                Only sites that are running trunk or branch can
+                be overwritten by migration. sites running a tag are not included.'
       ),
       '#ajax' => array(
         'callback' => 'acquia_migrate_databases_callback',
@@ -132,8 +132,8 @@ function acquia_migrate_migrate_form($form, &$form_state, $migrate_user, $migrat
     );
   }
   else {
-    $form['environment'] = array(
-      '#markup' => t('Available environment for migration: %env', array('%env' => array_pop($envs))),
+    $form['site'] = array(
+      '#markup' => t('Available site for migration: %env', array('%env' => array_pop($envs))),
     );
   }
 
@@ -141,26 +141,29 @@ function acquia_migrate_migrate_form($form, &$form_state, $migrate_user, $migrat
 }
 
 function acquia_migrate_migrate_form_submit($form, &$form_state) {
+  $cloudapi = acquia_migrate_cloudapi_connect();
   $op = $form_state['values']['op'];
-  $environment = $form_state['values']['environment'];
+  $site = $form_state['values']['site'];
   $database = $form_state['values']['database'];
   $docroot = preg_quote(DRUPAL_ROOT . '/');
+  $environment = $cloudapi->environment($site, 'prod');
+  $ssh_host = $environment['ssh_host'];
   
-  if (!acquia_migrate_sshkey_exists($environment)) {
-    $cloudapi = acquia_migrate_cloudapi_connect();
+  if (!acquia_migrate_sshkey_exists($site)) {
     $publicKey = file_get_contents('/tmp/acquia_migrate/acquia.rsa.pub');
-    $cloudapi->addSshKey($environment, $publicKey, 'acquiamigration');
+    $cloudapi->addSshKey($site, $publicKey, 'acquiamigration');
   }
 
   switch ($op) {
     case t('Migrate code'):
-      drupal_set_message(t('Migrating code for envrionment %env from %docroot', array('%env' => $environment, '%docroot' => $docroot)));
+      drupal_set_message(t('Migrating code for envrionment %env from %docroot', array('%env' => $site, '%docroot' => $docroot)));
       break;
     case t('Migrate files'):
-      drupal_set_message(t('Migrating files for envrionment %env', array('%env' => $environment)));
+      drupal_set_message(t('Migrating files for envrionment %env', array('%env' => $site)));
       break;
     case t('Migrate database'):
       $file = _acquia_migrate_backup_db_to_file_mysql();
+      $database_creds = $cloudapi->environmentDatabase($site, 'prod', $database);
       drupal_set_message(t('Migrating database %file', array('%file' => $file)));
       break;
   }
