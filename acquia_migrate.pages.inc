@@ -85,7 +85,8 @@ function acquia_migrate_migrate_form($form, &$form_state, $migrate_user, $migrat
 
   $sites = array();
   foreach($cloudapi->sites() as $site) {
-    $sites["$site"] = "$site";
+    $site = explode(':', $site);
+    $sites["$site[1]"] = "$site[1]";
   }
 
   $form['#prefix'] = t('Select the server to connect to.');
@@ -164,6 +165,7 @@ function acquia_migrate_migrate_form_submit($form, &$form_state) {
     case t('Migrate database'):
       $file = _acquia_migrate_backup_db_to_file_mysql();
       $database_creds = $cloudapi->environmentDatabase($site, 'prod', $database);
+      exec("scp -v -o stricthostKeychecking=no -i /tmp/acquia_migrate/acquia.rsa $file $site@$ssh_host:/mnt/tmp/$site/");
       drupal_set_message(t('Migrating database %file', array('%file' => $file)));
       break;
   }
