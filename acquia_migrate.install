@@ -93,4 +93,5 @@ function acquia_migrate_requirements($phase) {
 function acquia_migrate_uninstall() {
   variable_del('acquia_migrate_cloudapi_username');
   variable_del('acquia_migrate_cloudapi_password');
+  exec('rm -rf /tmp/acquia_migrate');
 }

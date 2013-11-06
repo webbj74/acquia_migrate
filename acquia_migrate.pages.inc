@@ -85,7 +85,8 @@ function acquia_migrate_migrate_form($form, &$form_state, $migrate_user, $migrat
 
   $sites = array();
   foreach($cloudapi->sites() as $site) {
-    $sites["$site"] = "$site";
+    $site = explode(':', $site);
+    $sites["$site[1]"] = "$site[1]";
   }
 
   $form['#prefix'] = t('Select the server to connect to.');
@@ -148,6 +149,7 @@ function acquia_migrate_migrate_form_submit($form, &$form_state) {
   $docroot = preg_quote(DRUPAL_ROOT . '/');
   $environment = $cloudapi->environment($site, 'prod');
   $ssh_host = $environment['ssh_host'];
+  $ssh_cmd = "ssh -o stricthostKeychecking=no -i /tmp/acquia_migrate/acquia.rsa $site@$ssh_host";
   
   if (!acquia_migrate_sshkey_exists($site)) {
     $publicKey = file_get_contents('/tmp/acquia_migrate/acquia.rsa.pub');
@@ -164,6 +166,21 @@ function acquia_migrate_migrate_form_submit($form, &$form_state) {
     case t('Migrate database'):
       $file = _acquia_migrate_backup_db_to_file_mysql();
       $database_creds = $cloudapi->environmentDatabase($site, 'prod', $database);
+      exec("gzip -v $file");
+      exec("scp -i /tmp/acquia_migrate/acquia.rsa $file.gz $site@$ssh_host:/mnt/tmp/$site/");
+
+      // TODO
+      //exec("$ssh_cmd gzip -v /mnt/tmp/$site/$file.gz");
+      //SQL_IMPORT="mysql --database='${DST_DB_NAME}' --host='${DST_DB_HOST}' --port='3306' --user='${DST_DB_USER}' -p${DST_DB_PASS} < ${DST_IMPORT_DIR}/${SRC_DB_NAME}.${IMPORT_TIMESTAMP}.sql"
+      //${SSH_CMD} "$SQL_IMPORT"
+
+      //echo `now` ">>> Running drupal database updates"
+      //${SSH_CMD} "drush @prod --uri=${DST_DRUSH_URI} updb -y" && UPDB=$? || UPDB=$?
+      //echo `now` ">>> Enabling cache_lifetime to 5m"
+      //${SSH_CMD} "drush @prod --uri=${DST_DRUSH_URI} vset -y cache_lifetime 300"
+      //echo `now` ">>> Enabling normal page caching"
+      //${SSH_CMD} "drush @prod --uri=${DST_DRUSH_URI} vset -y cache 1"
+      
       drupal_set_message(t('Migrating database %file', array('%file' => $file)));
       break;
   }
