@@ -166,11 +166,13 @@ function acquia_migrate_migrate_form_submit($form, &$form_state) {
     case t('Migrate database'):
       $file = _acquia_migrate_backup_db_to_file_mysql();
       $database_creds = $cloudapi->environmentDatabase($site, 'prod', $database);
-      exec("gzip -v $file");
-      exec("scp -i /tmp/acquia_migrate/acquia.rsa $file.gz $site@$ssh_host:/mnt/tmp/$site/");
+      exec("gzip -v  " . TMP_PATH . "$file");
+      exec("scp -o stricthostKeychecking=no -i /tmp/acquia_migrate/acquia.rsa " . TMP_PATH . "$file.gz $site@$ssh_host:/mnt/tmp/$site/");
+      $sql_import="mysql --database='" . $database_creds['instance_name'] . "' --host='" . $database_creds['host'] . "' --port='3306' --user='" . $database_creds['username'] . "' -p" . $database_creds['password'];
+      exec("$ssh_cmd zcat /mnt/tmp/$site/$file.gz || $sql_import");
+
 
       // TODO
-      //exec("$ssh_cmd gzip -v /mnt/tmp/$site/$file.gz");
       //SQL_IMPORT="mysql --database='${DST_DB_NAME}' --host='${DST_DB_HOST}' --port='3306' --user='${DST_DB_USER}' -p${DST_DB_PASS} < ${DST_IMPORT_DIR}/${SRC_DB_NAME}.${IMPORT_TIMESTAMP}.sql"
       //${SSH_CMD} "$SQL_IMPORT"
 
@@ -183,6 +185,11 @@ function acquia_migrate_migrate_form_submit($form, &$form_state) {
       
       drupal_set_message(t('Migrating database %file', array('%file' => $file)));
       break;
+  }
+
+  if (acquia_migrate_sshkey_exists($site)) {
+    // This doesn't seem to work and I'm not in the mood to fix.
+    //$cloudapi->deleteSshKey($site, 'acquiamigration');
   }
   return;
 }
