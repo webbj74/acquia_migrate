@@ -158,32 +158,41 @@ function acquia_migrate_migrate_form_submit($form, &$form_state) {
 
   switch ($op) {
     case t('Migrate code'):
+      $output = theme('code', array());
+      file_put_contents(TMP_PATH . 'code_to_acquia.sh', $output);
       drupal_set_message(t('Migrating code for envrionment %env from %docroot', array('%env' => $site, '%docroot' => $docroot)));
       break;
     case t('Migrate files'):
+      $output = theme('files', array());
+      file_put_contents(TMP_PATH . 'files_to_acquia.sh', $output);
       drupal_set_message(t('Migrating files for envrionment %env', array('%env' => $site)));
       break;
     case t('Migrate database'):
-      $file = _acquia_migrate_backup_db_to_file_mysql();
-      $database_creds = $cloudapi->environmentDatabase($site, 'prod', $database);
-      exec("gzip -v  " . TMP_PATH . "$file");
-      exec("scp -o stricthostKeychecking=no -i /tmp/acquia_migrate/acquia.rsa " . TMP_PATH . "$file.gz $site@$ssh_host:/mnt/tmp/$site/");
-      $sql_import="mysql --database='" . $database_creds['instance_name'] . "' --host='" . $database_creds['host'] . "' --port='3306' --user='" . $database_creds['username'] . "' -p" . $database_creds['password'];
-      exec("$ssh_cmd zcat /mnt/tmp/$site/$file.gz || $sql_import");
+      global $databases;
+      $SRC_DB = $databases['default']['default'];
+      $DST_DB = $cloudapi->environmentDatabase($site, 'prod', $database);
+      $output = theme('database', array(
+        'SSH_CMD' => $ssh_cmd,
+        'SRC_DB_USER' => $SRC_DB['username'],
+        'SRC_DB_PASS' => $SRC_DB['password'],
+        'SRC_DB_HOST' => $SRC_DB['host'],
+        'SRC_DB_NAME' => $SRC_DB['database'],
+        'SRC_EXPORT_DIR' => TMP_PATH,
+        'IMPORT_TIMESTAMP' => date('Ymd-Hi'),
+        'DST_IMPORT_DIR' => "/mnt/tmp/$site",
+        'ACQUIA_SITEGROUP' => $site,
+        'ACQUIA_HOSTNAME' => $ssh_host,
+        'DST_DB_NAME' => $DST_DB['instance_name'],
+        'DST_DB_HOST' => $DST_DB['host'],
+        'DST_DB_USER' => $DST_DB['username'],
+        'DST_DB_PASS' => $DST_DB['password'],
+        'DST_DRUSH_URI' => 'default',
+        ));
+      file_put_contents(TMP_PATH . 'data_to_acquia.sh', $output);
+      chmod(TMP_PATH . 'data_to_acquia.sh', 0777);
+      exec(TMP_PATH . 'data_to_acquia.sh');
 
-
-      // TODO
-      //SQL_IMPORT="mysql --database='${DST_DB_NAME}' --host='${DST_DB_HOST}' --port='3306' --user='${DST_DB_USER}' -p${DST_DB_PASS} < ${DST_IMPORT_DIR}/${SRC_DB_NAME}.${IMPORT_TIMESTAMP}.sql"
-      //${SSH_CMD} "$SQL_IMPORT"
-
-      //echo `now` ">>> Running drupal database updates"
-      //${SSH_CMD} "drush @prod --uri=${DST_DRUSH_URI} updb -y" && UPDB=$? || UPDB=$?
-      //echo `now` ">>> Enabling cache_lifetime to 5m"
-      //${SSH_CMD} "drush @prod --uri=${DST_DRUSH_URI} vset -y cache_lifetime 300"
-      //echo `now` ">>> Enabling normal page caching"
-      //${SSH_CMD} "drush @prod --uri=${DST_DRUSH_URI} vset -y cache 1"
-      
-      drupal_set_message(t('Migrating database %file', array('%file' => $file)));
+      drupal_set_message(t('Migrating database'));
       break;
   }
 
