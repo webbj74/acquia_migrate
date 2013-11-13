@@ -58,7 +58,7 @@ echo `now` ">> Making sure <?php echo $DST_IMPORT_DIR; ?> exists"
 <?php echo $SSH_CMD; ?> mkdir -vp <?php echo $DST_IMPORT_DIR; ?>
 
 echo `now` ">>> copying to Acquia Cloud"
-scp -i /tmp/acquia_migrate/acquia.rsa <?php echo $SRC_EXPORT_DIR; ?>/${SQLDUMP} <?php echo $ACQUIA_SITEGROUP; ?>@<?php echo $ACQUIA_HOSTNAME; ?>:<?php echo $DST_IMPORT_DIR; ?>
+scp -o stricthostKeychecking=no -i /tmp/acquia_migrate/acquia.rsa <?php echo $SRC_EXPORT_DIR; ?>/${SQLDUMP} <?php echo $ACQUIA_SITEGROUP; ?>@<?php echo $ACQUIA_HOSTNAME; ?>:<?php echo $DST_IMPORT_DIR; ?>
 
 echo `now` ">>> unzipping dumpfile on Acquia Cloud"
 <?php echo $SSH_CMD; ?> gunzip -v <?php echo $DST_IMPORT_DIR; ?>/${SQLDUMP}
