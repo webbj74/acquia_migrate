@@ -76,12 +76,7 @@ function acquia_migrate_migrate_form($form, &$form_state, $migrate_user, $migrat
   $form = array();
 
   $envs = array('dev', 'stage', 'prod',);
-  composer_manager_register_autoloader();
-
-  $cloudapi = CloudApiClient::factory(array(
-      'username' => $migrate_user,
-      'password' => $migrate_password,
-    ));
+  $cloudapi = acquia_migrate_cloudapi_connect();
 
   $sites = array();
   foreach($cloudapi->sites() as $site) {
@@ -158,8 +153,23 @@ function acquia_migrate_migrate_form_submit($form, &$form_state) {
 
   switch ($op) {
     case t('Migrate code'):
-      $output = theme('code', array());
-      file_put_contents(TMP_PATH . 'code_to_acquia.sh', $output);
+      $site_record = $cloudapi->site($site);
+      $output = theme('code', array(
+        'SSH_CMD' => $ssh_cmd,
+        'DST_VCS_WORK_TREE' => "/mnt/tmp/$site/import/" . $site,
+        'DST_IMPORT_DIR' => "/mnt/tmp/$site/import",
+        'DST_VCS_REMOTE' => $site_record['vcs_url'],
+        'DST_IMPORT_BRANCH' => 'import',
+        'DST_MERGE_BRANCH' => 'master',
+        'IMPORT_TIMESTAMP' => date('Ymd-Hi'),
+        'DST_TEMP' => "/mnt/tmp/$site",
+        'SRC_PATH_PREFIX' => $docroot,
+        'ACQUIA_SITEGROUP' => $site,
+        'ACQUIA_HOSTNAME' => $ssh_host,
+        ));
+      file_put_contents(TMP_PATH . '/code_to_acquia.sh', $output);
+      chmod(TMP_PATH . '/code_to_acquia.sh', 0777);
+      exec(TMP_PATH . '/code_to_acquia.sh');
       drupal_set_message(t('Migrating code for envrionment %env from %docroot', array('%env' => $site, '%docroot' => $docroot)));
       break;
     case t('Migrate files'):
@@ -188,9 +198,9 @@ function acquia_migrate_migrate_form_submit($form, &$form_state) {
         'DST_DB_PASS' => $DST_DB['password'],
         'DST_DRUSH_URI' => 'default',
         ));
-      file_put_contents(TMP_PATH . 'data_to_acquia.sh', $output);
-      chmod(TMP_PATH . 'data_to_acquia.sh', 0777);
-      exec(TMP_PATH . 'data_to_acquia.sh');
+      file_put_contents(TMP_PATH . '/data_to_acquia.sh', $output);
+      chmod(TMP_PATH . '/data_to_acquia.sh', 0777);
+      exec(TMP_PATH . '/data_to_acquia.sh');
 
       drupal_set_message(t('Migrating database'));
       break;
