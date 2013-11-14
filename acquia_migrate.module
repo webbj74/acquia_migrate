@@ -46,7 +46,16 @@ function acquia_migrate_theme() {
     ),
     'files' => array(
       'template' => 'files',
-      'variables' => array(),
+      'variables' => array(
+        'SSH_CMD' => NULL,
+        'DST_IMPORT_DIR' => NULL,
+        'DST_FILES_PREFIX' => NULL,
+        'DST_DOCROOT_RELATIVE_FILEPATH' => NULL,
+        'SRC_DOCROOT_RELATIVE_FILEPATH' => NULL,
+        'SRC_PATH_PREFIX' => NULL,
+        'ACQUIA_SITEGROUP' => NULL,
+        'ACQUIA_HOSTNAME' => NULL,
+        ),
     ),
     'database' => array(
       'template' => 'database',

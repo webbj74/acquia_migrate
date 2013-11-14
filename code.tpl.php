@@ -64,6 +64,7 @@ rsync -rltDvz \
   --delete \
   --exclude=__MACOSX \
   --exclude=.git \
+  --exclude=.gitignore \
   --exclude=.svn \
   --exclude=.DS_Store \
   --exclude=sites/example.com/files \

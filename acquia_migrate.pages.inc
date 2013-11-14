@@ -173,8 +173,19 @@ function acquia_migrate_migrate_form_submit($form, &$form_state) {
       drupal_set_message(t('Migrating code for envrionment %env from %docroot', array('%env' => $site, '%docroot' => $docroot)));
       break;
     case t('Migrate files'):
-      $output = theme('files', array());
-      file_put_contents(TMP_PATH . 'files_to_acquia.sh', $output);
+      $output = theme('files', array(
+        'SSH_CMD' => $ssh_cmd,
+        'DST_IMPORT_DIR' => "/mnt/tmp/$site/import",
+        'DST_FILES_PREFIX' => "/mnt/gfs/$site.prod",
+        'DST_DOCROOT_RELATIVE_FILEPATH' => variable_get('file_public_path','sites/default/files'),
+        'SRC_DOCROOT_RELATIVE_FILEPATH' => variable_get('file_public_path','sites/default/files'),
+        'SRC_PATH_PREFIX' => $docroot,
+        'ACQUIA_SITEGROUP' => $site,
+        'ACQUIA_HOSTNAME' => $ssh_host,
+        ));
+      file_put_contents(TMP_PATH . '/files_to_acquia.sh', $output);
+      chmod(TMP_PATH . '/files_to_acquia.sh', 0777);
+      exec(TMP_PATH . '/files_to_acquia.sh');
       drupal_set_message(t('Migrating files for envrionment %env', array('%env' => $site)));
       break;
     case t('Migrate database'):
