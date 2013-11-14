@@ -30,7 +30,19 @@ function acquia_migrate_theme() {
   return array(
     'code' => array(
       'template' => 'code',
-      'variables' => array(),
+      'variables' => array(
+        'SSH_CMD' => NULL,
+        'DST_VCS_WORK_TREE' => NULL,
+        'DST_IMPORT_DIR' => NULL,
+        'DST_VCS_REMOTE' => NULL,
+        'DST_IMPORT_BRANCH' => NULL,
+        'DST_MERGE_BRANCH' => NULL,
+        'IMPORT_TIMESTAMP' => NULL,
+        'DST_TEMP' => NULL,
+        'SRC_PATH_PREFIX' => NULL,
+        'ACQUIA_SITEGROUP' => NULL,
+        'ACQUIA_HOSTNAME' => NULL,
+        ),
     ),
     'files' => array(
       'template' => 'files',
