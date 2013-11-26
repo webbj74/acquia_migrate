@@ -115,16 +115,24 @@ function acquia_migrate_migrate_form($form, &$form_state, $migrate_user, $migrat
 
     $form['actions'] = array('#type' => 'actions');
     $form['actions']['code'] = array(
+      '#prefix' => '<ol><li>',
       '#type' => 'submit',
       '#value' => t('Migrate code'),
+      '#suffix' => '<small>' . 
+                    t("This only needs to be done for one site in your multi-site.")
+                    . '</small></li>'
     );
     $form['actions']['files'] = array(
+      '#prefix' => '<li>',  
       '#type' => 'submit',
       '#value' => t('Migrate files'),
+      '#suffix' => '</li>'
     );
     $form['actions']['database'] = array(
+      '#prefix' => '<li>',  
       '#type' => 'submit',
       '#value' => t('Migrate database'),
+      '#suffix' => '</li></ol>'
     );
   }
   else {
