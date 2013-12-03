@@ -1,0 +1,7 @@
+name = Acquia Cloud API
+description = "Allows Drupal to interact with Acquia's Cloud API"
+package = Acquia Network Connector
+core = 7.x
+files[] = acquia_cloud.module
+php = 5.2
+
