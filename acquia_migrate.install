@@ -22,16 +22,8 @@ function acquia_migrate_requirements($phase) {
   include_once 'acquia_migrate.module';
 
   $t = get_t();
-  $sdk_path = 1; //libraries_get_path('acquia-sdk-php');
 
   $requirements = array(
-    'acquia_migrate_has_sdk' => array(
-      'title' => $t('Acquia SDK PHP'),
-      'description' => $t(
-        'The Acquia Migrate module requires <a href="%url">Acquia SDK PHP</a> to connect to Acquia\'s CloudAPI.',
-        array('%url' => 'https://github.com/cpliakas/acquia-sdk-php')
-      ),
-    ),
     'acquia_migrate_has_rsync' => array(
       'title' => $t('rsync'),
       'description' => $t('The Acquia Migrate module requires rsync to automate file transfers'),
@@ -59,16 +51,6 @@ function acquia_migrate_requirements($phase) {
       else {
         $requirements['acquia_migrate_has_rsync']['value'] = $t('Not Installed');
         $requirements['acquia_migrate_has_rsync']['severity'] = REQUIREMENT_ERROR;
-      }
-
-      // Ensure the SDK is available
-      if (!empty($sdk_path)) {
-        $requirements['acquia_migrate_has_sdk']['value'] = $t('Installed');
-        $requirements['acquia_migrate_has_sdk']['severity'] = REQUIREMENT_OK;
-      }
-      else {
-        $requirements['acquia_migrate_has_sdk']['value'] = $t('Not Installed');
-        $requirements['acquia_migrate_has_sdk']['severity'] = REQUIREMENT_ERROR;
       }
 
       // See if CURL is available
