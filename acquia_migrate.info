@@ -6,5 +6,5 @@ configure = admin/config/system/acquia-migrate
 files[] = acquia_migrate.module
 files[] = acquia_migrate.install
 files[] = acquia_migrate.pages.inc
+files[] = CloudApiClient.php
 php = 5.2
-dependencies[] = composer_manager

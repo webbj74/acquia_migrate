@@ -4,7 +4,9 @@
  * @file
  *   Acquia Migrate securely sends site to Acquia Cloud.
  */
-use Acquia\Cloud\Api\CloudApiClient;
+
+require_once 'CloudApiClient.php';
+use Acquia\AcquiaMigrate\CloudApiClient;
 
 define("TMP_PATH", "/tmp/acquia_migrate");
 
@@ -84,7 +86,6 @@ function acquia_migrate_theme() {
 function acquia_migrate_cloudapi_connect() {
   $migrate_user = variable_get('acquia_migrate_cloudapi_username', '');
   $migrate_password = variable_get('acquia_migrate_cloudapi_password', '');
-  composer_manager_register_autoloader();
 
   $cloudapi = CloudApiClient::factory(array(
       'username' => $migrate_user,
