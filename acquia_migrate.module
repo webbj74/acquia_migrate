@@ -87,7 +87,7 @@ function acquia_migrate_cloudapi_connect() {
   $migrate_user = variable_get('acquia_migrate_cloudapi_username', '');
   $migrate_password = variable_get('acquia_migrate_cloudapi_password', '');
 
-  $cloudapi = CloudApiClient::factory(array(
+  $cloudapi = AcquiaCloudApiClient::factory(array(
       'username' => $migrate_user,
       'password' => $migrate_password,
     ));
