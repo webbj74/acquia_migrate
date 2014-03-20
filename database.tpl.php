@@ -40,15 +40,15 @@ MYSQL_OPTS="--complete-insert --disable-keys --single-transaction -u <?php echo 
 SRC_DB_SKIP_DATA="^(cache|cache_.*|flood|semaphore|sessions|watchdog)$"
 
 echo `now` ">>> Generating list of tables"
-TABLES=`mysql --skip-column-names -e 'show tables' -u <?php echo $SRC_DB_USER; ?> -p<?php echo $SRC_DB_PASS; ?> -h <?php echo $SRC_DB_HOST; ?> <?php echo $SRC_DB_NAME; ?>`
+TABLES=`mysql --skip-column-names -e 'show tables' -u <?php echo $SRC_DB_USER; ?> -p<?php echo $SRC_DB_PASS; ?> -h <?php echo $SRC_DB_HOST; ?> -P <?php echo $SRC_DB_PORT; ?> <?php echo $SRC_DB_NAME; ?>`
 echo `now` ">>> dumping structure to <?php echo $SRC_EXPORT_DIR; ?>/<?php echo $SRC_DB_NAME; ?>.<?php echo $IMPORT_TIMESTAMP; ?>.sql"
-mysqldump ${MYSQL_OPTS} --no-data --password=<?php echo $SRC_DB_PASS; ?> <?php echo $SRC_DB_NAME; ?> ${TABLES} | sed -e 's/ENGINE=MyISAM/ENGINE=InnoDB/g' > <?php echo $SRC_EXPORT_DIR; ?>/<?php echo $SRC_DB_NAME; ?>.<?php echo $IMPORT_TIMESTAMP; ?>.sql
+mysqldump ${MYSQL_OPTS} --no-data --password=<?php echo $SRC_DB_PASS; ?> -P <?php echo $SRC_DB_PORT; ?> <?php echo $SRC_DB_NAME; ?> ${TABLES} | sed -e 's/ENGINE=MyISAM/ENGINE=InnoDB/g' > <?php echo $SRC_EXPORT_DIR; ?>/<?php echo $SRC_DB_NAME; ?>.<?php echo $IMPORT_TIMESTAMP; ?>.sql
 
 # Dump Data, Excluding Certain Tables
 echo `now` ">>> Generating list of tables to exclude data from."
 TABLES2=`echo "$TABLES" | grep -Ev "${SRC_DB_SKIP_DATA}"`
 echo `now` ">>> dumping data to <?php echo $SRC_EXPORT_DIR; ?>/<?php echo $SRC_DB_NAME; ?>.<?php echo $IMPORT_TIMESTAMP; ?>.sql... patience please."
-mysqldump ${MYSQL_OPTS} --no-create-info --password=<?php echo $SRC_DB_PASS; ?> <?php echo $SRC_DB_NAME; ?> ${TABLES2} >> <?php echo $SRC_EXPORT_DIR; ?>/<?php echo $SRC_DB_NAME; ?>.<?php echo $IMPORT_TIMESTAMP; ?>.sql
+mysqldump ${MYSQL_OPTS} --no-create-info --password=<?php echo $SRC_DB_PASS; ?> -P <?php echo $SRC_DB_PORT; ?> <?php echo $SRC_DB_NAME; ?> ${TABLES2} >> <?php echo $SRC_EXPORT_DIR; ?>/<?php echo $SRC_DB_NAME; ?>.<?php echo $IMPORT_TIMESTAMP; ?>.sql
 
 echo `now` ">>> gzipping <?php echo $SRC_EXPORT_DIR; ?>/<?php echo $SRC_DB_NAME; ?>.<?php echo $IMPORT_TIMESTAMP; ?>.sql"
 gzip -v <?php echo $SRC_EXPORT_DIR; ?>/<?php echo $SRC_DB_NAME; ?>.<?php echo $IMPORT_TIMESTAMP; ?>.sql

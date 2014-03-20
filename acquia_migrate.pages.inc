@@ -178,7 +178,7 @@ function acquia_migrate_migrate_form_submit($form, &$form_state) {
       file_put_contents(TMP_PATH . '/code_to_acquia.sh', $output);
       chmod(TMP_PATH . '/code_to_acquia.sh', 0777);
       exec(TMP_PATH . '/code_to_acquia.sh');
-      drupal_set_message(t('Migrating code for envrionment %env from %docroot', array('%env' => $site, '%docroot' => $docroot)));
+      drupal_set_message(t('Migrating code for environment %env from %docroot', array('%env' => $site, '%docroot' => $docroot)));
       break;
     case t('Migrate files'):
       $output = theme('files', array(
@@ -194,7 +194,7 @@ function acquia_migrate_migrate_form_submit($form, &$form_state) {
       file_put_contents(TMP_PATH . '/files_to_acquia.sh', $output);
       chmod(TMP_PATH . '/files_to_acquia.sh', 0777);
       exec(TMP_PATH . '/files_to_acquia.sh');
-      drupal_set_message(t('Migrating files for envrionment %env', array('%env' => $site)));
+      drupal_set_message(t('Migrating files for environment %env', array('%env' => $site)));
       break;
     case t('Migrate database'):
       global $databases;
@@ -206,6 +206,7 @@ function acquia_migrate_migrate_form_submit($form, &$form_state) {
         'SRC_DB_PASS' => $SRC_DB['password'],
         'SRC_DB_HOST' => $SRC_DB['host'],
         'SRC_DB_NAME' => $SRC_DB['database'],
+        'SRC_DB_PORT' => $SRC_DB['port'],
         'SRC_EXPORT_DIR' => TMP_PATH,
         'IMPORT_TIMESTAMP' => date('Ymd-Hi'),
         'DST_IMPORT_DIR' => "/mnt/tmp/$site",
